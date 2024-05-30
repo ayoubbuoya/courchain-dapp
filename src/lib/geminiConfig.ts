@@ -11,10 +11,19 @@ export const GEMINI_MODEL = genAi.getGenerativeModel({
 });
 
 export const GEMINI_GEN_CONFIG = {
-  temperature: 0.5,
-  topK: 1,
-  topP: 1,
-  maxOutputTokens: 8000,
+  temperature: 0.5, // This controls the randomness of the text generation
+  topP: 0.95, // This controls the diversity of the text generation
+  topK: 64, // This controls the diversity of the text generation
+  maxOutputTokens: 8192, // This controls the maximum number of tokens to generate
+  responseMimeType: "application/json",
+};
+
+export const GEMINI_GEN_TEXT_CONFIG = {
+  temperature: 1, // This controls the randomness of the text generation
+  topP: 0.95, // This controls the diversity of the text generation
+  topK: 64, // This controls the diversity of the text generation
+  maxOutputTokens: 8192, // This controls the maximum number of tokens to generate
+  responseMimeType: "text/plain",
 };
 
 export const GEMINI_SAFETY_CONFIG = [

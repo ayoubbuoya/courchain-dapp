@@ -1,25 +1,41 @@
+import initAdminBlockchainConnection from "@/lib/blockchain";
+import { CONTRACTID } from "@/lib/config";
 import connectDB from "@/lib/db";
 import {
   GEMINI_GEN_CONFIG,
   GEMINI_SAFETY_CONFIG,
   GEMINI_MODEL as model,
 } from "@/lib/geminiConfig";
-import Course from "@/models/course";
-import Lesson from "@/models/lesson";
-import Module from "@/models/module";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import AICourseHistory from "@/models/AICourseHistory";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   const { topic, mentorId } = await request.json();
+  console.log("Topic: ", topic);
+  console.log("MentorId: ", mentorId);
 
   if (!topic) {
-    return new Response("Please provide topic", { status: 400 });
+    return NextResponse.json(
+      { message: "Please provide topic" },
+      { status: 400 }
+    );
   }
 
   if (!mentorId) {
-    return new Response("Please provide mentorId", { status: 400 });
+    return NextResponse.json(
+      { message: "Please provide mentorId" },
+      { status: 400 }
+    );
   }
+
+  // Initialize Near Blockchain Connection
+  console.log("Connecting to Near Blockchain...");
+  const ayoubNearAccount = await initAdminBlockchainConnection();
+
+  console.log(
+    "Connected to Near Blockchain With account: ",
+    ayoubNearAccount.accountId
+  );
 
   // Generate the course
   console.log("Generating course for topic: ", topic);
@@ -35,6 +51,7 @@ export async function POST(request: Request) {
     "description": "Course Description",
     "level": "Course Level",
     "duration": "Course Duration",
+    "category": "Course Category",
     "requirements": [
         "Requirement 1",
         "Requirement 2",
@@ -79,8 +96,7 @@ export async function POST(request: Request) {
                 }
             ]
         }
-    ]
-}.Course Description should be short and concise.`;
+  ]}.Course Description should be short and concise.`;
 
   try {
     const result = await chat.sendMessage(prompt);
@@ -88,7 +104,7 @@ export async function POST(request: Request) {
 
     let genCourse = response.text();
     console.log("Course Generated Successfully!");
-    // console.log("Course generated: ", genCourse);
+    console.log("Course generated: ", genCourse);
     genCourse = genCourse
       .replace("```", "")
       .replace("json", "")
@@ -100,68 +116,143 @@ export async function POST(request: Request) {
 
     try {
       const course = JSON.parse(genCourse);
-      console.log("Course JSON: ", course);
-      console.log("Saving Course to DB...");
+      // console.log("Course JSON: ", course);
+      console.log("Saving Course to Blockchain...");
+
+      console.log("Course: ", course);
+
+      //save the course to the blockchain
+      const result = await ayoubNearAccount.functionCall({
+        contractId: CONTRACTID,
+        methodName: "save_course_by_admin",
+        args: {
+          mentor_id: mentorId,
+          title: course.title,
+          description: course.description,
+          level: course.level,
+          duration: course.duration,
+          category: course.category,
+          requirements: course.requirements,
+          objectives: course.objectives,
+          with_ai: true,
+          picture: "",
+          price: 0,
+          created_at: new Date().getTime(),
+        },
+      });
+
+      const courseId = Buffer.from(
+        result.status.SuccessValue,
+        "base64"
+      ).toString("utf-8");
+      console.log("Result: ", result);
+
+      console.log("Course Id : ", courseId);
+
+      // save course modules to the blockchain
+      const modules = course.modules;
+      const modulesChains = [];
+
+      console.log(`Saving ${modules.length} Modules to Blockchain...`);
+      for (let i = 0; i < modules.length; i++) {
+        console.log(`Create Module ${i + 1}...`);
+        const module = modules[i];
+        const result = await ayoubNearAccount.functionCall({
+          contractId: CONTRACTID,
+          methodName: "save_module_by_admin",
+          args: {
+            course_id: Number(courseId),
+            order: module.order,
+            title: module.title,
+            description: module.description,
+            status: "",
+            with_ai: true,
+            created_at: new Date().getTime(),
+          },
+        });
+
+        console.log(`Module ${i + 1} Created Successfully!`);
+
+        const decodedResult = Buffer.from(
+          result.status.SuccessValue,
+          "base64"
+        ).toString("utf-8");
+
+        const moduleChain = JSON.parse(decodedResult);
+        console.log("Module Chain: ", moduleChain);
+
+        modulesChains.push(moduleChain);
+
+        const moduleId = moduleChain.id;
+
+        console.log(`Create Module ${moduleId} Lessons...`);
+
+        const lessons = module.lessons;
+        for (let j = 0; j < lessons.length; j++) {
+          const lesson = lessons[j];
+          console.log(`Create Lesson ${j + 1}...`);
+          const result = await ayoubNearAccount.functionCall({
+            contractId: CONTRACTID,
+            methodName: "save_lesson_by_admin",
+            args: {
+              module_id: Number(moduleId),
+              order: lesson.order,
+              title: lesson.title,
+              description: lesson.description || "",
+              video_url: "",
+              article: "",
+              with_ai: true,
+              created_at: new Date().getTime(),
+            },
+          });
+          console.log(`Lesson ${j + 1} Created Successfully!`);
+        }
+
+        console.log(`Module ${moduleId} Lessons Created Successfully!`);
+      }
+
+      console.log("Course Saved to Blockchain Successfully!");
+
+      console.log("Saving the Chat History to Database...");
 
       await connectDB();
 
-      const modules = [];
-
-      for (let i = 0; i < course.modules.length; i++) {
-        const courseModule = course.modules[i];
-        const lessons = [];
-
-        for (let j = 0; j < courseModule.lessons.length; j++) {
-          const lesson = courseModule.lessons[j];
-          const newLesson = new Lesson({
-            title: lesson.title,
-            order: lesson.order,
-            withAI: true,
-          });
-          await newLesson.save();
-          lessons.push(newLesson._id);
-        }
-
-        const newModule = new Module({
-          title: courseModule.title,
-          order: courseModule.order,
-          withAI: true,
-          AIChatHistory: chatHistory,
-          lessons,
-        });
-        await newModule.save();
-        modules.push(newModule._id);
-      }
-
-      // Save the course to the database
-      const newCourse = new Course({
-        title: course.title,
-        duration: course.duration,
-        level: course.level,
-        tags: course.tags,
-        requirements: course.requirements,
-        objectives: course.objectives,
-        mentors: [mentorId],
-        withAI: true,
-        AIChatHistory: chatHistory,
-        modules,
-      });
-
-      await newCourse.save();
-      console.log("Course saved to db successfully");
-
-      return NextResponse.json({
-        message: "Course generated successfully",
-        course: course,
+      const newAICourseHistory = new AICourseHistory({
+        course_id: courseId,
+        mentor_id: mentorId,
         chatHistory: chatHistory,
-        courseId: newCourse._id,
-        modulesIds: modules,
       });
+
+      await newAICourseHistory.save();
+
+      console.log("Chat History Saved to Database Successfully!");
+
+      return NextResponse.json(
+        {
+          message: "Course Generated Successfully",
+          courseId: courseId,
+          course,
+          modules: modulesChains,
+        },
+        {
+          status: 201,
+        }
+      );
     } catch (error) {
-      console.log("Error in JSON parsing: ", error);
-      return new Response("Failed to generate course", { status: 500 });
+      console.log(error);
+      NextResponse.json(
+        { message: "Internal Server Error" },
+        {
+          status: 500,
+        }
+      );
     }
-  } catch (e) {
-    return new Response("Failed to generate course", { status: 500 });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      {
+        status: 500,
+      }
+    );
   }
 }

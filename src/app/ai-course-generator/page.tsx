@@ -42,19 +42,16 @@ export default function Page() {
     );
     // post request to the /course/genrate
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_AI_SERVER_API}/course/generate/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            mentorId: signedAccountId,
-            topic,
-          }),
-        }
-      );
+      const response = await fetch(`/api/ai/course/generate/`, {
+        method: "POST",
+        body: JSON.stringify({
+          mentorId: signedAccountId,
+          topic,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.ok) {
         setIsLoadingModules(false);
