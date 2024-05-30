@@ -1,0 +1,40 @@
+ <svg
+                              className="cursor-pointer "
+                              width="24.000000"
+                              height="25.000000"
+                              viewBox="0 0 24 25"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <desc>Created with Pixso.</desc>
+                              <defs />
+                              <path
+                                id="Vector"
+                                d="M0.74 4.36L4.25 23.99L18.3 23.99L21.81 4.36"
+                                stroke="#000000"
+                                stroke-opacity="1.000000"
+                                stroke-width="1.000000"
+                              />
+                              <path
+                                id="Vector"
+                                d="M-0.43 4L22.98 4"
+                                stroke="#000000"
+                                stroke-opacity="1.000000"
+                                stroke-width="1.000000"
+                                stroke-linecap="round"
+                              />
+                              <path
+                                id="Vector"
+                                d="M16.29 4.5L16.29 3C16.29 2.2 15.88 1.44 15.15 0.87C14.42 0.31 13.42 0 12.39 0L10.16 0C9.13 0 8.14 0.31 7.4 0.87C6.67 1.44 6.26 2.2 6.26 3L6.26 4.5"
+                                stroke="#000000"
+                                stroke-opacity="1.000000"
+                                stroke-width="1.000000"
+                              />
+                              <path
+                                id="Vector"
+                                d="M11.23 9.81L11.23 18.54M6.59 9.81L7.76 18.54M15.96 9.81L14.78 18.54"
+                                stroke="#000000"
+                                stroke-opacity="1.000000"
+                                stroke-width="1.000000"
+                              />
+                            </svg>
