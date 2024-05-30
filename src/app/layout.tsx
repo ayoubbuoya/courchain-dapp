@@ -38,7 +38,8 @@ export default function RootLayout({
     setIsLoading(true);
     const courses = await wallet.viewMethod({
       contractId: CONTRACTID,
-      method: "get_courses",
+      // method: "get_courses",
+      method: "get_published_courses",
     });
     setAllCourses(courses);
     setIsLoading(false);

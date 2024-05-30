@@ -79,7 +79,8 @@ export default function CoursePage({
     async function fetchCourses() {
       const courses = await wallet.viewMethod({
         contractId: CONTRACTID,
-        method: "get_courses",
+        // method: "get_courses",
+        method: "get_published_courses",
         args: {},
       });
       setAllCourses(courses);
