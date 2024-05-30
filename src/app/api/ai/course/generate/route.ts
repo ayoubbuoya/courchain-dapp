@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       console.log("Course: ", course);
 
       //save the course to the blockchain
-      const result = await ayoubNearAccount.functionCall({
+      const result: any = await ayoubNearAccount.functionCall({
         contractId: CONTRACTID,
         methodName: "save_course_by_admin",
         args: {
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
       for (let i = 0; i < modules.length; i++) {
         console.log(`Create Module ${i + 1}...`);
         const module = modules[i];
-        const result = await ayoubNearAccount.functionCall({
+        const result: any = await ayoubNearAccount.functionCall({
           contractId: CONTRACTID,
           methodName: "save_module_by_admin",
           args: {

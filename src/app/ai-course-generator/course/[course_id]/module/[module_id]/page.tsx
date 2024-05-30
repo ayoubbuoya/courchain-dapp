@@ -65,7 +65,7 @@ export default function Page({
 
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_AI_SERVER_API}/lesson/generate/`,
+      `/api/ai/lesson/generate/`,
       {
         method: "POST",
         body: data,

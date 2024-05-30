@@ -317,55 +317,41 @@ export default function MentorCoursePage({
       return;
     }
 
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_AI_SERVER_API}/lesson/no-save/generate/`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            course_id: courseId.toString(),
-            lesson_id: currentLesson.id.toString(),
-            mentor_id: signedAccountId,
-          }),
-        }
-      );
+    const response = await fetch(`/api/ai/lesson/no-save/generate/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        course_id: courseId.toString(),
+        lesson_id: currentLesson.id.toString(),
+        mentor_id: signedAccountId,
+      }),
+    });
 
-      if (!response.ok) {
-        toast.update(loadingToast, {
-          type: "error",
-          render: "Error Generating AI Content",
-          isLoading: false,
-          autoClose: 1000,
-        });
-        return;
-      }
-
-      const { message, content } = await response.json();
-      console.log("Message: ", message);
-      console.log("Lesson Content: ", content);
-      // update the value of currentLesson article using the setCurrentLesson function
-      setAIGeneratedContent(content);
-
-      toast.update(loadingToast, {
-        type: "success",
-        render: message,
-        isLoading: false,
-        autoClose: 2000,
-      });
-    } catch (error) {
-      console.error("Error Generating AI Content: ", error);
+    if (!response.ok) {
       toast.update(loadingToast, {
         type: "error",
         render: "Error Generating AI Content",
         isLoading: false,
         autoClose: 1000,
       });
-    } finally {
-      setIsAISectionLoading(false);
+      return;
     }
+
+    const { message, content } = await response.json();
+    console.log("Message: ", message);
+    console.log("Lesson Content: ", content);
+    // update the value of currentLesson article using the setCurrentLesson function
+    setAIGeneratedContent(content);
+
+    toast.update(loadingToast, {
+      type: "success",
+      render: message,
+      isLoading: false,
+      autoClose: 2000,
+    });
+    setIsAISectionLoading(false);
   };
 
   const handleSaveAIContent = async () => {
